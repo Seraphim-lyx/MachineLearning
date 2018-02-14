@@ -1,7 +1,4 @@
 from openpyxl import load_workbook
-import copy
-import math
-import random
 
 
 class linearRegression(object):
@@ -21,7 +18,6 @@ class linearRegression(object):
         """
         wb = load_workbook(filename=file)
         self.ws = wb[sheet]
-        # self.setFactor()
         for row in self.ws.rows:
             r = []
             r.append(1)
@@ -49,16 +45,15 @@ class linearRegression(object):
     def batchGD(self, minCF):
         """
         """
-        # print(thetaList)
         localTheta = self.theta[:]
         total = 0
         alpha = 0.0001
         for j in range(len(self.theta)):
             for row in self.dataSet[:40000]:
-                # row_ = self.reOrderValue(row)
                 err = self.error(row, localTheta)
                 total += err * row[j]
-            self.theta[j] = self.theta[j] - (total / self.max_row) * alpha
+            self.theta[j] = self.theta[j] - \
+                (total / self.max_row) * alpha  # deviation
 
     def costFunction(self, tl):
         total = 0
@@ -82,18 +77,7 @@ class linearRegression(object):
             t[4] * row[4]
         return y - row[5]
 
-    def reOrderValue(self, row):
-        r = []
-        r.append(1)  # const
-        r.append(row[2].value)  # temp
-        r.append(row[3].value)  # humidity
-        r.append(row[4].value)  # wind speed
-        r.append(row[5].value)  # vapour pressure
-        r.append(row[1].value)  # MW
-        return r
-
     def test(self):
-        # print(self.theta)
         total = 0
         for row in self.dataSet[40000:]:
             y = self.theta[0] * row[0] + \
