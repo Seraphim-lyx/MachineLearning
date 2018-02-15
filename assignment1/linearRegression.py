@@ -92,5 +92,7 @@ class linearRegression(object):
 l = linearRegression()
 l.loadData('data.xlsx', 'Sheet1')
 
-l.learning()
-l.test()
+# l.learning()
+# l.test()
+t = [7.00078936, 143.53119717, 2.30554999, -16.0371012, 55.22525297]
+print(l.costFunction(t))
