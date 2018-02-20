@@ -1,4 +1,5 @@
 from openpyxl import load_workbook
+import random
 
 
 class linearRegression(object):
@@ -28,6 +29,12 @@ class linearRegression(object):
             r.append(row[1].value)
             self.dataSet.append(r)
 
+        for i in self.dataSet:
+            if random.random() > 0.8:
+                self.testSet.append(i)
+            else:
+                self.trainSet.append(i)
+
         self.max_row = len(self.dataSet)
 
     def learning(self):
@@ -49,7 +56,7 @@ class linearRegression(object):
         total = 0
         alpha = 0.0001
         for j in range(len(self.theta)):
-            for row in self.dataSet[:40000]:
+            for row in self.trainSet:
                 err = self.error(row, localTheta)
                 total += err * row[j]
             self.theta[j] = self.theta[j] - \
@@ -79,7 +86,7 @@ class linearRegression(object):
 
     def test(self):
         total = 0
-        for row in self.dataSet[40000:]:
+        for row in self.testSet:
             y = self.theta[0] * row[0] + \
                 self.theta[1] * row[1] + \
                 self.theta[2] * row[2] + \
@@ -91,8 +98,9 @@ class linearRegression(object):
 
 l = linearRegression()
 l.loadData('data.xlsx', 'Sheet1')
-
+print(len(l.trainSet))
 # l.learning()
 # l.test()
-t = [7.00078936, 143.53119717, 2.30554999, -16.0371012, 55.22525297]
-print(l.costFunction(t))
+# #
+# t=[7.00078936, 143.53119717, 2.30554999, -16.0371012, 55.22525297]
+# print(l.costFunction(t))
