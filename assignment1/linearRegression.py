@@ -43,7 +43,7 @@ class linearRegression(object):
         """
         lastCF = 0
         CF = self.costFunction(self.theta)
-        while abs(lastCF - CF) > 0.1:
+        while abs(lastCF - CF) > 0.01:
             self.batchGD(CF)
             lastCF = CF
             CF = self.costFunction(self.theta)
@@ -54,7 +54,8 @@ class linearRegression(object):
         """
         localTheta = self.theta[:]
         total = 0
-        alpha = 0.0001
+        alpha = 0.0002
+
         for j in range(len(self.theta)):
             for row in self.trainSet:
                 err = self.error(row, localTheta)
@@ -65,7 +66,7 @@ class linearRegression(object):
     def costFunction(self, tl):
         total = 0
 
-        for row in self.dataSet[:40000]:
+        for row in self.trainSet:
             err = self.error(row, tl)
             total += pow(err, 2)
 
@@ -92,15 +93,12 @@ class linearRegression(object):
                 self.theta[2] * row[2] + \
                 self.theta[3] * row[3] + \
                 self.theta[4] * row[4]
-            total += abs(y - row[5])
-        print(total/self.max_row)
+            total += pow(y - row[5], 2)
+        print(total / (2 * len(self.testSet)))
 
 
 l = linearRegression()
 l.loadData('data.xlsx', 'Sheet1')
-print(len(l.trainSet))
-# l.learning()
-# l.test()
-# #
-# t=[7.00078936, 143.53119717, 2.30554999, -16.0371012, 55.22525297]
-# print(l.costFunction(t))
+l.learning()
+# l.theta = [70.61729996, 141.79027405, 1.61074663, -16.15458898, 56.48189629]
+l.test()
