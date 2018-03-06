@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jan  2 20:36:48 2018
 
-@author: lanlandetian
 """
 
 import UserCF
@@ -49,7 +47,7 @@ def SplitData(data, M, k, seed):
     return train, test
 
 
-# 将列表形式数据转换为dict形式
+#
 def transform(oriData):
     ret = dict()
     for user, item, rating, time in oriData:

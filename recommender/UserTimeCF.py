@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan  3 09:56:26 2018
 
-@author: lanlandetian
 """
 
 import math
