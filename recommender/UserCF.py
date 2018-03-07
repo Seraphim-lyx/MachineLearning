@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Dec 31 12:46:42 2017
 
-@author: lanlandetian
 """
 import math
 import operator
