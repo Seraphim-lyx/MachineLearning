@@ -2,6 +2,7 @@ import numpy as np
 import random
 import scipy.io as sio
 
+
 class smoTrain(object):
     """docstring for smoTrain"""
 
@@ -19,7 +20,7 @@ class smoTrain(object):
             return self.linearKernel(x, z)
         elif self.kernel == 'poly':
             return self.polyKernel(x, z)
-        elif self.kernel == 'rbf':     #K(x,z)=exp(− gamma*|x−z|**2)
+        elif self.kernel == 'rbf':  # K(x,z)=exp(− gamma*|x−z|**2)
             return self.GaussianKernel(x, z)
         else:
             print("kernel error")
@@ -33,26 +34,26 @@ class smoTrain(object):
         self.alpha = np.zeros(len(y))
         self. b = 0.0
         count = 0
-        while count < 5: 
+        while count < 5:
             # print(count)
-            alpha_change = 0  
+            alpha_change = 0
             for i in range(len(self.alpha)):
                 print(alpha_change)
-                #Calculating error for i
-                Ei = self.b + np.sum(self.alpha * y * k[i])-y[i]
-                if((Ei*y[i] < - self.tol) and (self.alpha[i] < self.C)) or \
-                  ((Ei*y[i] > self.tol) and (self.alpha[i] > 0)):
+                # Calculating error for i
+                Ei = self.b + np.sum(self.alpha * y * k[i]) - y[i]
+                if((Ei * y[i] < - self.tol) and (self.alpha[i] < self.C)) or \
+                  ((Ei * y[i] > self.tol) and (self.alpha[i] > 0)):
                     # print('inside')
-                    j = random.randint(0,len(self.alpha)-1)
+                    j = random.randint(0, len(self.alpha) - 1)
                     while i == j:
-                        j = random.randint(0, len(self.alpha)-1)
-                    #Calculating error for j    
-                    Ej = self.b + np.sum(self.alpha * y * k[j])-y[j]
+                        j = random.randint(0, len(self.alpha) - 1)
+                    # Calculating error for j
+                    Ej = self.b + np.sum(self.alpha * y * k[j]) - y[j]
 
-                    ai = self.alpha[i] #old alpha i
-                    aj = self.alpha[j] #old alpha j
+                    ai = self.alpha[i]  # old alpha i
+                    aj = self.alpha[j]  # old alpha j
 
-                    #calculating bounding area for alpha
+                    # calculating bounding area for alpha
                     if y[i] == y[j]:
                         L = max(0, self.alpha[j] + self.alpha[i] - self.C)
                         H = min(self.C, self.alpha[j] + self.alpha[i])
@@ -61,7 +62,7 @@ class smoTrain(object):
                         H = min(self.C, self.C + self.alpha[j] - self.alpha[i])
 
                     if L == H:
-                        #next iteration if no area
+                        # next iteration if no area
                         print("L==H")
                         continue
 
@@ -70,27 +71,27 @@ class smoTrain(object):
                         print("eta out")
                         continue
 
-                    #clip new value
-                    self.alpha[j] = aj - y[j] * (Ei-Ej) / eta
+                    # clip new value
+                    self.alpha[j] = aj - y[j] * (Ei - Ej) / eta
 
-                    #bound new value
+                    # bound new value
                     self.alpha[j] = min(H, self.alpha[j])
                     self.alpha[j] = max(L, self.alpha[j])
 
-                    if abs(self.alpha[j]-aj) < self.tol:
-                        #if change less than tol
+                    if abs(self.alpha[j] - aj) < self.tol:
+                        # if change less than tol
                         self.alpha[j] = aj
                         print("too small")
                         continue
 
-                    #tune alpha i accroding to alpha j
-                    self.alpha[i] = ai + y[i] * y[j] *(aj - self.alpha[j])
+                    # tune alpha i accroding to alpha j
+                    self.alpha[i] = ai + y[i] * y[j] * (aj - self.alpha[j])
 
                     bi = self.b - Ei - y[i] * (self.alpha[i] - ai) * k[i, i] + \
-                                       y[j] * (self.alpha[j] - aj) * k[i, j]
+                        y[j] * (self.alpha[j] - aj) * k[i, j]
 
                     bj = self.b - Ej - y[i] * (self.alpha[i] - ai) * k[i, j] + \
-                                       y[j] * (self.alpha[j] - aj) * k[j, j]
+                        y[j] * (self.alpha[j] - aj) * k[j, j]
 
                     if 0 < self.alpha[i] and self.alpha[i] < self.C:
                         self.b = bi
@@ -100,18 +101,18 @@ class smoTrain(object):
                         self.b = (bi + bj) / 2.0
 
                     alpha_change += 1
-                    
+
                     print("iter:{0}, change:{1}".format(i, alpha_change))
 
             # print(alpha_change,i)
-            #iteration until alpha converge
-        
+            # iteration until alpha converge
+
             if alpha_change == 0:
                 # print("count + 1")
                 count += 1
             else:
                 # print("reset count")
-                count = 0   
+                count = 0
             print("whole iter number {0}".format(count))
 
         self.w = np.dot(self.alpha * y, self.X)
@@ -130,18 +131,17 @@ class smoTrain(object):
         #     return 1
         # else:
         #     return 0
-        # return 
-        if self.kernel == 'linear:'
-            p = np.dot(self.w, px.T)+self.b
-            p[p>=0] = 1
-            p[p<0] = -1
+        # return
+        if self.kernel == 'linear':
+            p = np.dot(self.w, px.T) + self.b
+            p[p >= 0] = 1
+            p[p < 0] = -1
         return p
 
     def evaluate(self, ry, py):
-        accracy = 0
+        # accracy = 0
+        pass
         # for i in range(len(py)):
-
-        
 
     def linearKernel(self, x, z):
         return np.dot(x, z.T)
@@ -153,20 +153,21 @@ class smoTrain(object):
         xx = np.sum(x * x, axis=1)
         zz = np.sum(z * z, axis=1)
         res = - 2.0 * np.dot(x, z.T) + \
-        xx.reshape(-1, 1) + \
-        zz.reshape(1, -1)
-        return np.exp(-1 * self.gamma * res) # 0< gamma < 1
+            xx.reshape(-1, 1) + \
+            zz.reshape(1, -1)
+        return np.exp(-1 * self.gamma * res)  # 0< gamma < 1
+
 
 f = sio.loadmat('f:\\matlab\Hw2-package\spamTrain.mat')
 ff = sio.loadmat('f:\\matlab\Hw2-package\spamTest.mat')
 XX = f['X']
 testx = ff['Xtest']
 yy = f['y']
-testy = ff['ytest'].reshape(1,-1)[0].astype(int)
+testy = ff['ytest'].reshape(1, -1)[0].astype(int)
 # XX = XX[:2000]
-yy = yy.reshape(1,-1)[0].astype(int)
-yy[yy==0] = -1
-testy[testy==0] = -1
+yy = yy.reshape(1, -1)[0].astype(int)
+yy[yy == 0] = -1
+testy[testy == 0] = -1
 # print(yy)
 print(testy)
 
