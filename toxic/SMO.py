@@ -14,7 +14,7 @@ class SMO(object):
 
     def _kernel(self, x, z=None):
         if z is None:
-            z = x
+            z = np.copy(x)
         if self.kernel == 'linear':
             return self.linearKernel(x, z)
         elif self.kernel == 'poly':
@@ -30,24 +30,29 @@ class SMO(object):
         self.X = X
         self.y = y
         k = self._kernel(X)
-        self.alpha = np.zeros(len(y))
-        self. b = 0.0
+        # print(k)
+        self.alpha = np.zeros(len(X))
+        self.E = np.zeros(len(X))
+        self.b = 0.0
+
         count = 0
         while count < 5: 
             # print(count)
             alpha_change = 0  
             for i in range(len(self.alpha)):
-                print(alpha_change)
+                # print(alpha_change)
                 #Calculating error for i
-                Ei = self.b + np.sum(self.alpha * y * k[i])-y[i]
-                if((Ei*y[i] < - self.tol) and (self.alpha[i] < self.C)) or \
-                  ((Ei*y[i] > self.tol) and (self.alpha[i] > 0)):
+                self.E[i] = self.b + np.sum(self.alpha * y * k[i])-y[i]
+                if((self.E[i] * y[i] < - self.tol) and (self.alpha[i] < self.C)) or \
+                  ((self.E[i] * y[i] > self.tol) and (self.alpha[i] > 0)):
                     # print('inside')
-                    j = random.randint(0,len(self.alpha)-1)
+                    # j = random.randint(0,len(self.alpha)-1)
+                    j = np.round(random.random() * len(y)-1).astype(int)
                     while i == j:
-                        j = random.randint(0, len(self.alpha)-1)
+                        j = np.round(random.random() * len(y)-1).astype(int)
+                        # j = random.randint(0, len(self.alpha)-1)
                     #Calculating error for j    
-                    Ej = self.b + np.sum(self.alpha * y * k[j])-y[j]
+                    self.E[j] = self.b + np.sum(self.alpha * y * k[j])-y[j]
 
                     ai = self.alpha[i] #old alpha i
                     aj = self.alpha[j] #old alpha j
@@ -62,34 +67,34 @@ class SMO(object):
 
                     if L == H:
                         #next iteration if no area
-                        print("L==H")
+                        # print("L==H")
                         continue
 
                     eta = 2 * k[i, j] - k[i, i] - k[j, j]
                     if eta >= 0:
-                        print("eta out")
+                        # print("eta out")
                         continue
 
                     #clip new value
-                    self.alpha[j] = aj - y[j] * (Ei-Ej) / eta
+                    self.alpha[j] = self.alpha[j] - (y[j] * (self.E[i] - self.E[j])) / eta
 
                     #bound new value
                     self.alpha[j] = min(H, self.alpha[j])
                     self.alpha[j] = max(L, self.alpha[j])
 
-                    if abs(self.alpha[j]-aj) < self.tol:
+                    if abs(self.alpha[j] - aj) < self.tol:
                         #if change less than tol
                         self.alpha[j] = aj
-                        print("too small")
+                        # print("too small")
                         continue
 
                     #tune alpha i accroding to alpha j
                     self.alpha[i] = ai + y[i] * y[j] *(aj - self.alpha[j])
 
-                    bi = self.b - Ei - y[i] * (self.alpha[i] - ai) * k[i, i] + \
+                    bi = self.b - self.E[i] - y[i] * (self.alpha[i] - ai) * k[i, i] + \
                                        y[j] * (self.alpha[j] - aj) * k[i, j]
 
-                    bj = self.b - Ej - y[i] * (self.alpha[i] - ai) * k[i, j] + \
+                    bj = self.b - self.E[j] - y[i] * (self.alpha[i] - ai) * k[i, j] + \
                                        y[j] * (self.alpha[j] - aj) * k[j, j]
 
                     if 0 < self.alpha[i] and self.alpha[i] < self.C:
@@ -101,7 +106,7 @@ class SMO(object):
 
                     alpha_change += 1
                     
-                    print("iter:{0}, change:{1}".format(i, alpha_change))
+                    # print("iter:{0}, change:{1}".format(i, alpha_change))
 
             #iteration until alpha converge
         
@@ -113,29 +118,26 @@ class SMO(object):
                 count = 0   
             print("whole iter number {0}".format(count))
 
-        self.w = np.dot(self.alpha * y, self.X)
-        # self.alpha = self.alpha[self.alpha > 0]
-        # index = np.where(self.alpha>0)[0]
-        # self.X = self.X[index]
-        # self.y = self.y[index]
+        self.w = np.dot(self.alpha * y, X)
+        index = np.where(self.alpha>0)[0]
+        self.alpha = self.alpha[self.alpha > 0]
+        self.X = self.X[index]
+        self.y = self.y[index]
 
     def predict(self, px):
-        
+        p = np.array([])
         if self.kernel == 'linear':
             p = np.dot(self.w, px.T)+self.b
-            p[p>=0] = 1
-            p[p<0] = -1
-            return p
-        # err = 0
-        # for i in range(len(self.alpha)):
-        #     err += self.alpha[i] * self.y[i] * self._kernel(px, self.X[i])
-        # err = err + self.b
-        # print(err)
-        # if err >= 0:
-        #     return 1
-        # else:
-        #     return 0
-        # return 
+
+        elif self.kernel == 'rbf':
+            p = self._kernel(px,self.X)
+            p = p * self.alpha
+            p = p * self.y
+            p = np.sum(p,axis=1)
+        else:
+            p = np.dot(self.alpha*self.y,self._kernel(self.X, px))+self.b
+        return np.sign(p)
+
 
     def evaluate(self, ry, py):
         hit = 0 
@@ -157,33 +159,31 @@ class SMO(object):
         if self.gamma is None:
             self.gamma = 1 / np.shape(x)[1]
 
-        print(self.gamma)
-        xx = np.sum(x * x, axis=1)
-        zz = np.sum(z * z, axis=1)
+        xx = np.sum(x * x, axis = 1)
+        zz = np.sum(z * z, axis = 1)
         res = - 2.0 * np.dot(x, z.T) + \
         xx.reshape(-1, 1) + \
         zz.reshape(1, -1)
-        return np.exp(-self.gamma * res) # 0 < gamma < 1
+        # value = (-1*1) / (2 * np.power (2,2))
+        # exp = np.exp(value)
+        # return exp**res # 0 < gamma < 1
+        return np.exp(-self.gamma * res)
+
+
 
 f = sio.loadmat('f:\\matlab\Hw2-package\spamTrain.mat')
 ff = sio.loadmat('f:\\matlab\Hw2-package\spamTest.mat')
-XX = f['X'][:1000]
-testx = ff['Xtest']
-yy = f['y'][:1000]
-# testy = ff['ytest'].reshape(1,-1)[0].astype(int)
-# XX = XX[:2000]
+XX = f['X'][:4000].astype(int)
+testx = ff['Xtest'].astype(int)
+yy = f['y'][:4000].astype(int)
+testy = ff['ytest'].reshape(1,-1)[0].astype(int)
 yy = yy.reshape(1,-1)[0].astype(int)
 yy[yy==0] = -1
-# testy[testy==0] = -1
-# print(yy)
-# print(testy)
+testy[testy==0] = -1
 
 smo = SMO(kernel = 'rbf')
 smo.train(XX, yy)
-# p=smo.predict(XX)
-# count = 0
-# for i in range(len(p)):
-#     if p[i] == testy[i]:
-#         count+=1
+print(len(smo.alpha))
+p=smo.predict(testx)
 
-# print(count/len(testy))
+print(smo.evaluate(testy, p))
