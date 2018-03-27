@@ -14,7 +14,7 @@ class smoTrain(object):
 
     def _kernel(self, x, z=None):
         if z is None:
-            z = np.copy(x)
+            z = x
         if self.kernel == 'linear':
             return self.linearKernel(x, z)
         elif self.kernel == 'poly':
@@ -34,14 +34,15 @@ class smoTrain(object):
         self. b = 0.0
         count = 0
         while count < 5: 
-            print(count)
+            # print(count)
             alpha_change = 0  
             for i in range(len(self.alpha)):
+                print(alpha_change)
                 #Calculating error for i
                 Ei = self.b + np.sum(self.alpha * y * k[i])-y[i]
                 if((Ei*y[i] < - self.tol) and (self.alpha[i] < self.C)) or \
                   ((Ei*y[i] > self.tol) and (self.alpha[i] > 0)):
-                    print('inside')
+                    # print('inside')
                     j = random.randint(0,len(self.alpha)-1)
                     while i == j:
                         j = random.randint(0, len(self.alpha)-1)
@@ -102,7 +103,7 @@ class smoTrain(object):
                     
                     print("iter:{0}, change:{1}".format(i, alpha_change))
 
-            print(alpha_change,i)
+            # print(alpha_change,i)
             #iteration until alpha converge
         
             if alpha_change == 0:
@@ -111,26 +112,30 @@ class smoTrain(object):
             else:
                 # print("reset count")
                 count = 0   
-            print(count)     
             print("whole iter number {0}".format(count))
 
         self.w = np.dot(self.alpha * y, self.X)
-        self.alpha = self.alpha[self.alpha > 0]
-        index = np.where(self.alpha>0)[0]
-        self.X = self.X[index]
-        self.y = self.y[index]
+        # self.alpha = self.alpha[self.alpha > 0]
+        # index = np.where(self.alpha>0)[0]
+        # self.X = self.X[index]
+        # self.y = self.y[index]
 
     def predict(self, px):
-        err = 0
-        for i in range(len(self.px[i])):
-            err += self.alpha[i] * self.y[i] * self._kernel(px, self.X[i])
-        err = err + self.b
-
-        if err >= 0:
-            return 1
-        else:
-            return 0
-        return 
+        # err = 0
+        # for i in range(len(self.alpha)):
+        #     err += self.alpha[i] * self.y[i] * self._kernel(px, self.X[i])
+        # err = err + self.b
+        # print(err)
+        # if err >= 0:
+        #     return 1
+        # else:
+        #     return 0
+        # return 
+        if self.kernel == 'linear:'
+            p = np.dot(self.w, px.T)+self.b
+            p[p>=0] = 1
+            p[p<0] = -1
+        return p
 
     def evaluate(self, ry, py):
         accracy = 0
@@ -150,18 +155,27 @@ class smoTrain(object):
         res = - 2.0 * np.dot(x, z.T) + \
         xx.reshape(-1, 1) + \
         zz.reshape(1, -1)
-        return np.exp(-self.gamma * res) # 0< gamma < 1
+        return np.exp(-1 * self.gamma * res) # 0< gamma < 1
 
 f = sio.loadmat('f:\\matlab\Hw2-package\spamTrain.mat')
+ff = sio.loadmat('f:\\matlab\Hw2-package\spamTest.mat')
 XX = f['X']
+testx = ff['Xtest']
 yy = f['y']
-XX = XX[0:1000]
-yy = yy[0:1000].reshape(1,-1)[0].astype(int)
+testy = ff['ytest'].reshape(1,-1)[0].astype(int)
+# XX = XX[:2000]
+yy = yy.reshape(1,-1)[0].astype(int)
 yy[yy==0] = -1
-print(yy)
+testy[testy==0] = -1
+# print(yy)
+print(testy)
 
+# smo = smoTrain('linear')
+# smo.train(XX, yy)
+# p=smo.predict(testx)
+# count = 0
+# for i in range(len(p)):
+#     if p[i] == testy[i]:
+#         count+=1
 
-smo = smoTrain('linear')
-smo.train(XX, yy)
-print(yy[0])
-print(smo.predict(XX))
+# print(count/len(testy))
